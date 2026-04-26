@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "http://102.211.186.44:8080/api/:path*"
+    },
+    {
+      "source": "/ocr-api/:path*",
+      "destination": "http://102.211.186.44:5002/:path*"
+    }
+  ]
+}

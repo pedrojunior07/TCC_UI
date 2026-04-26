@@ -1,13 +1,24 @@
 // Cliente para o serviço Python de OCR.
 
-const DEFAULT_CERT_SERVICE_URL = 'http://102.211.186.44:5002'
+const DEFAULT_CERT_SERVICE_URL = '/ocr-api'
 
 function trimSlash(value) {
   return String(value || '').replace(/\/+$/, '')
 }
 
+function isInsecureAbsoluteUrl(value) {
+  return /^http:\/\//i.test(String(value || '').trim())
+}
+
+function isHttpsPage() {
+  return typeof window !== 'undefined' && window.location.protocol === 'https:'
+}
+
 export function getCertServiceUrl() {
-  return trimSlash(import.meta.env.VITE_CERT_SERVICE_URL || DEFAULT_CERT_SERVICE_URL)
+  const configured = trimSlash(import.meta.env.VITE_CERT_SERVICE_URL || DEFAULT_CERT_SERVICE_URL)
+  // Use the frontend proxy when the page is HTTPS and the configured service is HTTP.
+  if (isHttpsPage() && isInsecureAbsoluteUrl(configured)) return DEFAULT_CERT_SERVICE_URL
+  return configured
 }
 
 function authHeaders(accessToken) {
