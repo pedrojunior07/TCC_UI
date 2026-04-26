@@ -1,0 +1,153 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(203 213 225) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgb(203 213 225);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Fade/slide transitions for route changes and panels */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes progressSlide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.page-fade {
+  animation: fadeIn 0.25s ease-out;
+}
+
+.card-pop {
+  transition: transform 0.15s ease-out, box-shadow 0.2s ease-out;
+}
+.card-pop:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(17, 24, 39, 0.08);
+}
+
+/* Top-of-page navigation progress */
+@keyframes navBar {
+  0% { transform: translateX(-100%); }
+  60% { transform: translateX(30%); }
+  100% { transform: translateX(100%); }
+}
+.nav-progress {
+  animation: navBar 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* OCR scan effect — barra que desce sobre a imagem durante o processamento */
+@keyframes ocrScan {
+  0% { transform: translateY(-10%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(110%); opacity: 0; }
+}
+.ocr-scan-bar {
+  animation: ocrScan 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Imagem recortada que aparece com pop */
+@keyframes cropPop {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+.crop-pop {
+  animation: cropPop 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Campos obrigatórios em falta — anel vermelho pulsante */
+@keyframes pulseRed {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); border-color: rgb(248, 113, 113); }
+  50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); border-color: rgb(239, 68, 68); }
+}
+.pulse-red {
+  animation: pulseRed 1.6s ease-in-out infinite;
+}
+
+/* Pontinhos de progresso */
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-6px); opacity: 1; }
+}
+.dot-bounce > span {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin: 0 3px;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: dotBounce 1.2s ease-in-out infinite;
+}
+.dot-bounce > span:nth-child(2) { animation-delay: 0.15s; }
+.dot-bounce > span:nth-child(3) { animation-delay: 0.3s; }
+.dot-bounce > span:nth-child(4) { animation-delay: 0.45s; }
+.dot-bounce > span:nth-child(5) { animation-delay: 0.6s; }
+
+/* Logo com flutuação subtil */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.float-slow {
+  animation: float 3.5s ease-in-out infinite;
+}
+
+/* Card de entrada com slide-up */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-up {
+  animation: slideUp 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ring respirando — para a câmara/scan halo */
+@keyframes pulseRing {
+  0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.45); }
+  70% { box-shadow: 0 0 0 18px rgba(99, 102, 241, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+}
+.pulse-ring {
+  animation: pulseRing 2s ease-out infinite;
+}

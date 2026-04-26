@@ -1,0 +1,431 @@
+PAROQUIA_FINALTEST — FLUXO DO SISTEMA (para desenho de BD e diagramas)
+====================================================================
+
+1) Objetivo
+-----------
+Sistema de gestão paroquial (admin dashboard) com:
+- cadastro/importação de membros (CSV) e pré-preenchimento por OCR (simulado)
+- gestão de famílias (agregação de membros)
+- gestão de núcleos e vida semanal (actividades/encontros), cargos, contribuições, galeria e visitas familiares
+- geração/gestão de certificados (via secretaria) e solicitações de certificados (via núcleos)
+- integrações simuladas (Google Calendar via .ics; WhatsApp via payload/logs)
+
+Nota técnica atual: tudo funciona no frontend com hooks + rotas e persistência em localStorage.
+Para BD, as entidades abaixo devem virar tabelas/relacionamentos com IDs estáveis.
+
+
+2) Perfis (RBAC) e permissões
+-----------------------------
+
+2.1 Perfis
+- super_admin:
+  - gere utilizadores/perfis
+  - "provisiona" núcleos: cria núcleo, define membros do núcleo, atribui gestor(es) do núcleo
+  - pode configurar integrações (WhatsApp API)
+  - pode aceder a certificados (secretaria) para acompanhar/emitir
+  - NÃO gere actividades/cargos/contribuições/visitas dos núcleos (apenas provisioning)
+
+- secretario:
+  - gere certificados (emissão/controlo) e processa solicitações vindas dos núcleos
+  - pode configurar integrações (WhatsApp API)
+  - acesso geral a membros/famílias
+  - NÃO vê finanças de núcleo (contribuições) nem módulo operacional de núcleos
+
+- chefe_nucleo (UI: "Gestor do núcleo"):
+  - acede SOMENTE aos seus núcleos atribuídos
+  - gere actividades, cargos, contribuições, galeria, visitas familiares, WhatsApp do núcleo
+  - vê SOMENTE membros atribuídos aos seus núcleos
+  - pode solicitar certificados à secretaria (não gera certificados)
+
+2.2 Regras de acesso importantes
+- Acesso a um núcleo: permitido se o utilizador for super_admin (provisionamento) OU se for gestor e estiver atribuído ao núcleo.
+- Acesso a membros:
+  - super_admin/secretario: vê todos
+  - gestor: vê apenas membros cujas chaves estejam atribuídas aos seus núcleos
+- Certificados:
+  - gestor: apenas "solicitar" (pedido)
+  - secretario/super_admin: "processar/emitir" e gerir fila de solicitações
+
+
+3) Rotas (mapa de navegação)
+----------------------------
+
+Autenticação/Conta:
+- /login
+- /perfil
+- /utilizadores (super_admin)
+
+Membros:
+- /membros (lista)
+- /membros/novo (criar)
+- /membros/importar (importar CSV) (não usado por gestor)
+- /membros/ocr (OCR simulado)
+- /membros/:memberKey (detalhe)
+
+Famílias:
+- /familias (lista)
+- /familias/:familyId (detalhe)
+
+Núcleos:
+- /nucleos (lista/provisionamento)
+- /nucleos/:id (detalhe; super_admin vê apenas "Membros" e "Gestores")
+
+Operação do núcleo (apenas gestor):
+- /actividades (lista)
+- /actividades/nova (criar)
+- /actividades/:id (detalhe/gestão)
+- /cargos (cargos/responsáveis)
+- /contribuicoes (financeiro/registos/relatórios)
+- /visitas-familiares (plano semanal)
+
+Certificados:
+- /certificados (secretario e super_admin)
+- /solicitar-certificado (gestor)
+
+Integrações:
+- /integracoes/whatsapp (secretario e super_admin)
+
+
+4) Fluxos de negócio (passo-a-passo)
+------------------------------------
+
+4.1 Autenticação
+1) Utilizador entra em /login
+2) Sistema valida credenciais (utilizador ativo)
+3) Cria sessão (para BD: sessão/token)
+4) Redireciona para Dashboard
+
+4.2 Gestão de utilizadores (super_admin)
+1) Super admin cria utilizadores e escolhe perfil: secretario ou gestor do núcleo
+2) Pode resetar password/ativar/desativar
+3) Regra: deve existir pelo menos 1 super_admin ativo
+
+4.3 Gestão de membros (CSV + CRUD)
+1) (Secretario/Super admin) Importa CSV em /membros/importar
+   - estratégia: substituir (replace) ou ignorar duplicados (skip)
+2) (Todos) Podem criar/editar membro manualmente
+   - gestor do núcleo: ao criar membro manualmente, deve selecionar um núcleo que lhe pertence;
+     o sistema adiciona automaticamente o membro à lista de membros desse núcleo
+3) Relações com família:
+   - associar/desassociar membro a uma família (com relação opcional)
+
+4.4 OCR (simulação)
+1) Em /membros/ocr o utilizador envia/seleciona imagem
+2) Sistema simula extração de campos e pré-preenche formulário
+3) Utilizador valida e grava como membro
+
+4.5 Gestão de famílias
+1) Criar família (nome, residência, observações, nomes dos pais, etc.)
+2) Associar membros existentes à família (via ligações)
+3) Ver detalhe: membros daquela família + dados da família
+
+4.6 Provisionamento de núcleo (super_admin)
+1) Super admin cria núcleo (nome, comunidade, dia/hora, local, ativo)
+2) Define "membros do núcleo" (subset dos membros gerais)
+3) Atribui um ou mais gestores do núcleo ao núcleo
+4) Super admin pode editar: dados básicos, membros do núcleo e gestores
+5) Super admin não executa operações semanais (actividades/finanças/visitas)
+
+4.7 Operação do núcleo (gestor do núcleo)
+1) Gestor entra em /nucleos e vê apenas núcleos atribuídos
+2) Em /nucleos/:id:
+   - Actividades: cria/edita encontros (inclui "Criar Encontro de Quarta" com defaults)
+   - Cargos: atribui cargos e contactos (coordenador, secretário, tesoureiro, etc.)
+   - Contribuições: regista contribuições/cotas, anexa comprovativo e emite recibo simples (HTML)
+   - Galeria: upload de imagens por actividade (simulado)
+   - Visitas familiares: planeia visitas semanais (uma família por semana)
+   - WhatsApp: configura grupo do núcleo e templates/notificações
+
+4.8 Actividades (encontros semanais)
+1) Criar actividade:
+   - geral (/actividades/nova) ou a partir do núcleo ("Criar Encontro de Quarta")
+2) Definir: data/hora, local, agenda, estado (planeada/confirmada/realizada/cancelada)
+3) No detalhe da actividade:
+   - Exportar para Google Calendar: gera payload .ics (download) e log
+   - Enviar WhatsApp:
+     - escolhe destinatários (a partir de cargos com contacto)
+     - opcional: enviar também para grupo do núcleo (se configurado e API ativa)
+     - loga payload/ação
+   - Marcar estado (realizada/cancelada etc.)
+   - Registar contribuições vinculadas
+   - Upload e gestão de imagens (galeria)
+
+4.9 Cargos e responsabilidades
+1) Criar cargo ligado ao núcleo (cargo, responsável, contacto, mandato, estado)
+2) Alertas: mandatos a terminar (fimMandato próximos 30 dias)
+3) Contactos ativos alimentam lista de destinatários de WhatsApp
+
+4.10 Contribuições / cotas / comprovativos (financeiro do núcleo)
+1) Registar contribuição manual:
+   - tipo, valor/moeda, data, pagador, método, descrição
+   - flags: quitado / comprovado
+2) Upload de comprovativo (ficheiro → base64/localStorage; para BD: ficheiro + metadados)
+3) Relatórios:
+   - filtros por período/núcleo/tipo/método
+   - totais + tabela
+   - export CSV (frontend)
+
+4.11 Imagens por actividade
+1) No detalhe da actividade: upload múltiplo, preview, remover
+2) Para BD: guardar metadados + referência ao storage
+
+4.12 Visitas familiares (uma família por semana por núcleo)
+1) Em /visitas-familiares: escolher semana e atribuir 1 família
+2) Regra: no mesmo núcleo e mesma semana, não podem existir 2 famílias
+3) Histórico e estado (planeada/realizada/cancelada)
+
+4.13 Certificados (via secretaria)
+Regra principal: gestor do núcleo NÃO gera certificados; apenas solicita.
+
+Fluxo:
+1) Gestor do núcleo entra em /solicitar-certificado
+2) Seleciona membro (apenas dos seus núcleos), tipo de certificado e observações
+3) Sistema cria pedido com estado "pendente"
+4) Secretaria entra em /certificados:
+   - vê fila de solicitações
+   - muda estado: aprovado/recusado/emitido
+   - (futuro) anexa documento gerado e entrega ao solicitante
+
+
+5) Integrações (simuladas) e logs
+---------------------------------
+
+5.1 Google Calendar
+- No detalhe da actividade: botão exportar → gera .ics e faz download
+- Log de evento exportado
+
+5.2 WhatsApp API (configuração global)
+- Tela /integracoes/whatsapp:
+  - enabled, apiBaseUrl, token, senderId
+  - botão "Testar" mostra payload e grava log
+
+5.3 WhatsApp por núcleo (grupo e notificações)
+- Em /nucleos/:id (aba WhatsApp):
+  - configura grupo: groupId, groupName, inviteLink
+  - cria templates/notificações por núcleo (trigger + template + ativo/inativo)
+  - botão "Enviar" (simulação): mostra payload e grava log
+
+5.4 Logs/Auditoria
+- Todas ações importantes geram logs (no frontend atualmente em localStorage).
+- Para BD: tabela de auditoria com (id, actorUserId, tipo, mensagem, meta JSON, timestamp).
+
+
+6) Modelo de dados sugerido (BD relacional)
+-------------------------------------------
+
+6.1 Autenticação e utilizadores
+TABELA users
+- user_id (PK, uuid)
+- username (unique)
+- name
+- role (enum: super_admin, secretario, chefe_nucleo)
+- active (bool)
+- password_hash + salt (ou auth provider externo)
+- created_at, last_login_at
+
+TABELA sessions (opcional)
+- session_id (PK)
+- user_id (FK users)
+- created_at, expires_at, revoked_at
+
+6.2 Membros e famílias
+TABELA members
+- member_id (PK, uuid)
+- ... campos canónicos (nome, comunidade, residência, datas sacramentos, etc.)
+- csv_raw (JSON) (opcional: guardar colunas originais)
+- created_at, updated_at
+
+TABELA families
+- family_id (PK, uuid)
+- nome
+- residencia
+- observacoes
+- nome_do_pai
+- nome_da_mae
+- created_at, updated_at
+
+TABELA family_members (ligação)
+- family_member_id (PK)
+- family_id (FK)
+- member_id (FK)
+- relacao (texto)
+- created_at
+CONSTRAINT: unique(family_id, member_id)
+
+6.3 Núcleos e acesso
+TABELA nucleos
+- nucleo_id (PK, uuid)
+- nome
+- comunidade (nullable)
+- descricao (nullable)
+- dia_encontro (default "Quarta-feira")
+- hora_encontro
+- local_encontro (nullable)
+- ativo (bool)
+- whatsapp_group_id (nullable)
+- whatsapp_group_name (nullable)
+- whatsapp_invite_link (nullable)
+- created_at, updated_at
+
+TABELA nucleo_managers
+- nucleo_id (FK nucleos)
+- user_id (FK users)
+- created_at
+CONSTRAINT: unique(nucleo_id, user_id)
+
+TABELA nucleo_members
+- nucleo_id (FK nucleos)
+- member_id (FK members)
+- created_at
+CONSTRAINT: unique(nucleo_id, member_id)
+
+6.4 Actividades
+TABELA actividades
+- actividade_id (PK, uuid)
+- nucleo_id (FK)
+- titulo (default "Encontro Semanal")
+- data (date ou varchar se aceitar formatos flexíveis; recomendado: date + hora)
+- hora_inicio (time/varchar)
+- hora_fim (time/varchar)
+- local
+- agenda (text)
+- estado (enum: planeada, confirmada, realizada, cancelada)
+- participantes_estimados (int, nullable)
+- participantes_presentes (int, nullable)
+- notas (text)
+- created_at, updated_at
+
+6.5 Cargos
+TABELA cargos
+- cargo_id (PK, uuid)
+- nucleo_id (FK)
+- cargo (texto)
+- responsavel_nome
+- responsavel_contacto (nullable)
+- inicio_mandato (date/varchar)
+- fim_mandato (date/varchar)
+- estado (enum: ativo, inativo)
+- created_at, updated_at
+
+6.6 Contribuições e comprovativos
+TABELA contribuicoes
+- contribuicao_id (PK, uuid)
+- nucleo_id (FK)
+- actividade_id (FK, nullable)
+- tipo (enum: cota, contribuicao, doacao, outro)
+- valor (decimal)
+- moeda (default MZN)
+- data (date/varchar)
+- pagador (texto)
+- metodo (enum: numerario, mpesa, emola, transferencia, outro)
+- descricao (text)
+- quitado (bool)
+- comprovado (bool)
+- created_at, updated_at
+
+TABELA anexos (comprovativos e imagens)
+- anexo_id (PK, uuid)
+- owner_type (enum: contribuicao, actividade_imagem, certificado, etc.)
+- owner_id (uuid)
+- nome_ficheiro
+- mime
+- tamanho
+- url_storage (ou blob_id)
+- created_at
+
+6.7 Imagens por actividade
+TABELA actividade_imagens
+- imagem_id (PK, uuid)
+- actividade_id (FK)
+- descricao (nullable)
+- anexo_id (FK anexos) OU url_storage direto
+- created_at
+
+6.8 Visitas familiares
+TABELA visitas_familiares
+- visita_id (PK, uuid)
+- semana_ref (ex.: "2026-W01" ou intervalo)
+- familia_id (FK families)
+- nucleo_id (FK nucleos)
+- estado (enum: planeada, realizada, cancelada)
+- observacoes (text)
+- created_at, updated_at
+CONSTRAINT: unique(nucleo_id, semana_ref)  // garante "1 família por semana por núcleo"
+
+6.9 Certificados e solicitações
+TABELA certificate_requests
+- request_id (PK, uuid)
+- tipo (enum: batismo, crisma, casamento, declaracao)
+- estado (enum: pendente, aprovado, recusado, emitido)
+- member_id (FK members)
+- nucleo_id (FK nucleos)
+- requested_by_user_id (FK users)
+- processed_by_user_id (FK users, nullable)
+- observacoes (text)
+- created_at, updated_at
+
+TABELA certificados (futuro, quando houver geração real)
+- certificado_id (PK)
+- request_id (FK certificate_requests)
+- anexo_id (FK anexos) (PDF)
+- emitido_em
+
+6.10 WhatsApp (config e notificações)
+TABELA whatsapp_config (global)
+- id (PK, fixed 1 row)
+- enabled (bool)
+- api_base_url
+- token (criptografar)
+- sender_id (nullable)
+- updated_at
+
+TABELA whatsapp_notificacoes
+- notif_id (PK, uuid)
+- nucleo_id (FK)
+- nome
+- trigger (enum/text: manual, 24h_antes, 2h_antes, apos_confirmacao)
+- template (text)
+- enabled (bool)
+- updated_at
+
+6.11 Logs/auditoria
+TABELA logs
+- log_id (PK, uuid)
+- actor_user_id (FK users, nullable)
+- type (texto/enum)
+- message (texto)
+- meta (JSON)
+- created_at
+
+
+7) Diagramas recomendados (o que desenhar)
+------------------------------------------
+1) ERD (Entidade-Relacionamento):
+   users ↔ nucleo_managers ↔ nucleos
+   members ↔ nucleo_members ↔ nucleos
+   nucleos → actividades → actividade_imagens/anexos
+   nucleos → cargos
+   nucleos → contribuicoes → anexos
+   families ↔ family_members ↔ members
+   nucleos + families → visitas_familiares
+   certificate_requests → (members, nucleos, users)
+   whatsapp_notificacoes → nucleos
+   logs → users (opcional)
+
+2) DFD / Fluxo de processos:
+   - Importação CSV → members → (ligações a famílias / núcleo_members)
+   - Provisionamento núcleo (admin) → nucleos + nucleo_members + nucleo_managers
+   - Operação núcleo (gestor) → actividades/cargos/contribuicoes/visitas/whatsapp_notificacoes
+   - Solicitação certificado (gestor) → certificate_requests → processamento (secretaria)
+
+3) Matriz de permissões (RBAC):
+   tabelar por rota/módulo x perfil.
+
+
+8) Observações para migração localStorage → BD
+----------------------------------------------
+- Substituir "memberKey" derivado por member_id (uuid) e manter "memberKey" apenas como campo auxiliar (unique opcional).
+- Ficheiros (comprovativos/imagens) devem ir para storage (S3/local) e BD guardar metadados.
+- Triggers de WhatsApp (24h/2h) exigem scheduler/worker (backend).
+- Google Calendar real exige OAuth e backend; por agora mantém export .ics.
+

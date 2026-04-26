@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(mvn clean compile:*)",
+      "Bash(.mvnw.cmd clean compile:*)"
+    ]
+  }
+}

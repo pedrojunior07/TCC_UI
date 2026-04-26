@@ -1,0 +1,18 @@
+export const STORAGE_KEYS = {
+  members: 'paroquia.membros',
+  families: 'paroquia.familias',
+  familyLinks: 'paroquia.familia_links',
+  activity: 'paroquia.atividade',
+  users: 'paroquia.users',
+  session: 'paroquia.session',
+  nucleos: 'paroquia.nucleos',
+  actividades: 'paroquia.actividades',
+  cargos: 'paroquia.cargos',
+  contribuicoes: 'paroquia.contribuicoes',
+  imagensActividades: 'paroquia.imagens_actividades',
+  visitasFamiliares: 'paroquia.visitas_familiares',
+  certificateRequests: 'paroquia.certificate_requests',
+  whatsappConfig: 'paroquia.whatsapp_config',
+  whatsappNotificacoes: 'paroquia.whatsapp_notificacoes',
+  sidebarCollapsed: 'paroquia.sidebar_collapsed',
+}
