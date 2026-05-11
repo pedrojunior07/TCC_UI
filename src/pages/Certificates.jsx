@@ -38,9 +38,10 @@ function parseFilenameFromContentDisposition(value) {
 }
 
 const CERT_TYPES = [
-  { value: 'batismo',   label: 'Certidão de Baptismo' },
-  { value: 'crisma',   label: 'Certidão de Crisma' },
+  { value: 'batismo',    label: 'Certidão de Baptismo' },
+  { value: 'crisma',    label: 'Certidão de Crisma' },
   { value: 'casamento', label: 'Certidão de Casamento' },
+  { value: 'idoneidade', label: 'Declaração de Idoneidade' },
 ]
 
 const SEX_OPTIONS = [
@@ -186,7 +187,7 @@ export function Certificates() {
             <div className="text-sm font-semibold text-gray-900">Certificados</div>
             <div className="mt-1 text-sm text-gray-600">Gerar certidões e processar solicitações da secretaria.</div>
           </div>
-          <Badge tone="blue">Baptismo • Crisma • Casamento</Badge>
+          <Badge tone="blue">Baptismo • Crisma • Casamento • Idoneidade</Badge>
         </div>
       </div>
 
@@ -320,7 +321,35 @@ export function Certificates() {
             <div className="text-sm font-semibold text-gray-900">Campos</div>
             <div className="mt-1 text-sm text-gray-600">Preencha os campos dinâmicos do modelo.</div>
 
-            {certType === 'crisma' ? (
+            {certType === 'idoneidade' ? (
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Input label="Nome completo" value={draft.nome || ''} onChange={(v) => setDraft((p) => ({ ...p, nome: v }))} />
+                <Input label="Nº do BI" value={draft.bi || ''} onChange={(v) => setDraft((p) => ({ ...p, bi: v }))} />
+                <div className="col-span-full text-xs font-semibold text-gray-500 uppercase tracking-wide mt-2">Baptismo</div>
+                <Input label="Dia" value={draft.baptismo_dia || ''} onChange={(v) => setDraft((p) => ({ ...p, baptismo_dia: v }))} />
+                <Input label="Mês" value={draft.baptismo_mes || ''} onChange={(v) => setDraft((p) => ({ ...p, baptismo_mes: v }))} />
+                <Input label="Ano" value={draft.baptismo_ano || ''} onChange={(v) => setDraft((p) => ({ ...p, baptismo_ano: v }))} />
+                <Input label="Paróquia do Baptismo" value={draft.baptismo_paroquia || ''} onChange={(v) => setDraft((p) => ({ ...p, baptismo_paroquia: v }))} />
+                <Input label="Reg. Nº (Baptismo)" value={draft.baptismo_reg || ''} onChange={(v) => setDraft((p) => ({ ...p, baptismo_reg: v }))} />
+                <div className="col-span-full text-xs font-semibold text-gray-500 uppercase tracking-wide mt-2">Crisma</div>
+                <Input label="Dia" value={draft.crisma_dia || ''} onChange={(v) => setDraft((p) => ({ ...p, crisma_dia: v }))} />
+                <Input label="Mês" value={draft.crisma_mes || ''} onChange={(v) => setDraft((p) => ({ ...p, crisma_mes: v }))} />
+                <Input label="Ano" value={draft.crisma_ano || ''} onChange={(v) => setDraft((p) => ({ ...p, crisma_ano: v }))} />
+                <Input label="Paróquia do Crisma" value={draft.crisma_paroquia || ''} onChange={(v) => setDraft((p) => ({ ...p, crisma_paroquia: v }))} />
+                <Input label="Reg. Nº (Crisma)" value={draft.crisma_reg || ''} onChange={(v) => setDraft((p) => ({ ...p, crisma_reg: v }))} />
+                <div className="col-span-full text-xs font-semibold text-gray-500 uppercase tracking-wide mt-2">Casamento</div>
+                <Input label="Dia" value={draft.casamento_dia || ''} onChange={(v) => setDraft((p) => ({ ...p, casamento_dia: v }))} />
+                <Input label="Mês" value={draft.casamento_mes || ''} onChange={(v) => setDraft((p) => ({ ...p, casamento_mes: v }))} />
+                <Input label="Ano" value={draft.casamento_ano || ''} onChange={(v) => setDraft((p) => ({ ...p, casamento_ano: v }))} />
+                <Input label="Paróquia do Casamento" value={draft.casamento_paroquia || ''} onChange={(v) => setDraft((p) => ({ ...p, casamento_paroquia: v }))} />
+                <Input label="Reg. Nº (Casamento)" value={draft.casamento_reg || ''} onChange={(v) => setDraft((p) => ({ ...p, casamento_reg: v }))} />
+                <div className="col-span-full text-xs font-semibold text-gray-500 uppercase tracking-wide mt-2">Emissão</div>
+                <Textarea label="À margem / observações" value={draft.a_margem || ''} onChange={(v) => setDraft((p) => ({ ...p, a_margem: v }))} rows={2} />
+                <Input label="Dia de emissão" value={draft.emissao_dia || ''} onChange={(v) => setDraft((p) => ({ ...p, emissao_dia: v }))} />
+                <Input label="Mês de emissão" value={draft.emissao_mes || ''} onChange={(v) => setDraft((p) => ({ ...p, emissao_mes: v }))} />
+                <Input label="Ano de emissão" value={draft.emissao_ano || ''} onChange={(v) => setDraft((p) => ({ ...p, emissao_ano: v }))} />
+              </div>
+            ) : certType === 'crisma' ? (
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Input label="Folha" value={draft.folha || ''} onChange={(v) => setDraft((p) => ({ ...p, folha: v }))} />
                 <Input

@@ -17,6 +17,7 @@ const baseNav = [
   { to: '/cargos', label: 'Cargos', icon: 'briefcase' },
   { to: '/certificados', label: 'Certificados', icon: 'certificate' },
   { to: '/solicitar-certificado', label: 'Solicitar certificado', icon: 'certificate' },
+  { to: '/servicos-paroquiais', label: 'Serviços', icon: 'services' },
   { to: '/integracoes/whatsapp', label: 'WhatsApp', icon: 'whatsapp' },
   { to: '/familias', label: 'Famílias', icon: 'home-users' },
 ]
@@ -143,6 +144,16 @@ function Icon({ name, active }) {
       </svg>
     )
   }
+  if (name === 'services') {
+    return (
+      <svg viewBox="0 0 24 24" className={cls} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h18v4H3z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18v4H3z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 17h18v4H3z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7 5h.01M7 12h.01M7 19h.01" />
+      </svg>
+    )
+  }
   if (name === 'church') {
     return (
       <svg viewBox="0 0 24 24" className={cls} fill="none" stroke="currentColor" strokeWidth="2">
@@ -221,6 +232,7 @@ export function Sidebar({ mobileOpen, onClose, collapsed = false, onToggleCollap
       if (n.to === '/cargos') return isNucleoManager
       if (n.to === '/certificados') return currentUser?.role === 'secretario' || currentUser?.role === 'super_admin'
       if (n.to === '/solicitar-certificado') return isNucleoManager
+      if (n.to === '/servicos-paroquiais') return currentUser?.role === 'super_admin' || currentUser?.role === 'secretario' || isNucleoManager
       if (n.to === '/integracoes/whatsapp') return isNucleoManager
       return true
     })

@@ -29,6 +29,7 @@ import { Cargos } from './pages/Cargos.jsx'
 import { WhatsAppSettings } from './pages/WhatsAppSettings.jsx'
 import { ParoquiaSettings } from './pages/ParoquiaSettings.jsx'
 import { MembrosEliminados } from './pages/MembrosEliminados.jsx'
+import { ServicosParoquiais } from './pages/ServicosParoquiais.jsx'
 
 export default function App() {
   return (
@@ -126,6 +127,14 @@ export default function App() {
               element={
                 <RequireRole roles={['chefe_nucleo']}>
                   <CertificateRequests />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/servicos-paroquiais"
+              element={
+                <RequireRole roles={['super_admin', 'secretario', 'chefe_nucleo']}>
+                  <ServicosParoquiais />
                 </RequireRole>
               }
             />
